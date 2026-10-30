@@ -33,19 +33,20 @@ const BlogEditor = () => {
         let img = e.target.files[0];
         if(img){
             let loadingToast = toast.loading("Uploading...")
-            uploadImage(img).then((url) => {
-                if(url){
-                    
-                    toast.dismiss(loadingToast);
-                    toast.success("uploaded successfully");
-                    setBlog({...blog, banner: url})
             
-                }
-            })
-            .catch(err => {
+            const reader=new FileReader();
+            reader.readAsDataURL(img);
+
+            reader.onload= () =>{
                 toast.dismiss(loadingToast);
-                return toast.error("Failed to upload image");
-            })
+                toast.success("Uploaded");
+                setBlog({ ...blog,banner :reader.result});
+            };
+
+            reader.onerror= (err)=>{
+                toast.dismiss(loadingToast);
+                toast.success("Failed");
+            };
         }
     }
 

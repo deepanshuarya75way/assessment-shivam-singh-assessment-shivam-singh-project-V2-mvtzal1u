@@ -5,14 +5,14 @@ import bcrypt from 'bcrypt';
 import { nanoid } from 'nanoid';
 import jwt from 'jsonwebtoken'
 import cors from 'cors';
-import admin    from "firebase-admin"
+//import admin    from "firebase-admin"
 import { readFileSync } from 'fs';
 
-const serviceAccount = JSON.parse(
-    readFileSync("./mern-blogging-website-e3921-firebase-adminsdk-hyrx9-a1aabfb15f.json", 'utf-8')
-);
+//const serviceAccount = JSON.parse(
+ //   readFileSync("./mern-blogging-website-e3921-firebase-adminsdk-hyrx9-a1aabfb15f.json", 'utf-8')
+//);
 
-import {getAuth} from "firebase-admin/auth"
+//import {getAuth} from "firebase-admin/auth"
 import aws from "aws-sdk";
 
 import User from "./Schema/User.js"
@@ -21,7 +21,7 @@ import Notification from './Schema/Notification.js';
 
 const server = express();
 
-mongoose.connect(process.env.DB_LOCATION, {
+mongoose.connect(process.env.DB_LOCATION || "mongodb://127.0.0.1:27017/blogging-website", {
     autoIndex: true,
 })
 
@@ -152,11 +152,11 @@ server.post("/signin" , (req, res) => {
     })
 })
 
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-})
+//admin.initializeApp({
+ //  credential: admin.credential.cert(serviceAccount)
+//})
 
-server.post("/google-auth", async (req, res) =>{
+ server.post("/google-auth", async (req, res) =>{
     let {access_token} = req.body;
     getAuth().verifyIdToken(access_token)
     .then(async (decodedUser) => {
@@ -196,7 +196,7 @@ server.post("/google-auth", async (req, res) =>{
     .catch(err => {
         return res.status(500).json({"error": "Error occured while login please try again"});
     })
-})
+}) 
 
 server.post("/search-blogs", (req, res) => {
     let { tag, query, page, author, limit, eliminate_blog} = req.body;
@@ -438,6 +438,61 @@ server.post("/like-blog", verifyJWT, (req, res) => {
         }
     })
 })
+
+server.post("/user-written-blogs", verifyJWT, (req, res) => {
+    let user_id = req.user;
+    let { 
+        page = 1, 
+        draft, 
+        query, 
+        sortBy = "date", 
+        order = "desc", 
+        limit = 5 
+    } = req.body;
+
+    let maxLimit = Number(limit) || 5;
+    let findQuery = { author: user_id };
+
+    
+    if (draft === true || draft === "true") {
+        findQuery.draft = true;
+    } else if (draft === false || draft === "false") {
+        findQuery.draft = false;
+    }
+
+    if (query && query.trim().length > 0) {
+        findQuery.title = new RegExp(query.trim(), 'i');
+    }
+
+    let sortQuery = {};
+    let sortDir = order === "asc" ? 1 : -1;
+
+    if (sortBy === "views" || sortBy === "reads") {
+        sortQuery["activity.total_reads"] = sortDir;
+    } else if (sortBy === "likes") {
+        sortQuery["activity.total_likes"] = sortDir;
+    } else {
+        sortQuery["publishedAt"] = sortDir;
+    }
+
+    Blog.countDocuments(findQuery)
+        .then(totalDocs => {
+            Blog.find(findQuery)
+                .skip((Number(page) - 1) * maxLimit)
+                .limit(maxLimit)
+                .sort(sortQuery)
+                .select("title banner publishedAt blog_id activity des tags draft -_id")
+                .then(blogs => {
+                    return res.status(200).json({ 
+                        blogs, 
+                        totalDocs, 
+                        totalPages: Math.ceil(totalDocs / maxLimit) || 1 
+                    });
+                })
+                .catch(err => res.status(500).json({ error: err.message }));
+        })
+        .catch(err => res.status(500).json({ error: err.message }));
+});
 
 server.post("/isliked-by-user", verifyJWT, (req, res) => {
     let user_id = req.user;
