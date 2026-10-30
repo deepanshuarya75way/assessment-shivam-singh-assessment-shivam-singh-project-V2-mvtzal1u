@@ -442,7 +442,6 @@ server.post("/like-blog", verifyJWT, (req, res) => {
 
 
 
-{/* */}
 server.post("/user-written-blogs", verifyJWT, (req, res) => {
     let user_id = req.user;
     let { 
