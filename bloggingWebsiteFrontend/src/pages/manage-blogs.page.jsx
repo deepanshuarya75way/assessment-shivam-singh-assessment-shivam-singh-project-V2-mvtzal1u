@@ -6,7 +6,7 @@ import Loader from "../components/loader.component";
 import NoDataMessage from "../components/nodata.component";
 import { ManagePublishedBlogCard, ManageDraftBlogPost } from "../components/manage-blogcard.component";
 import toast, { Toaster } from "react-hot-toast";
-import { useSearchParams } from "react-router-dom";
+
 
 const ManageBlogs = () => {
     const { userAuth: { access_token, username } } = useContext(UserContext);
