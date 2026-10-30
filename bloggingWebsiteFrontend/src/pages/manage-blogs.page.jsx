@@ -6,6 +6,7 @@ import Loader from "../components/loader.component";
 import NoDataMessage from "../components/nodata.component";
 import { ManagePublishedBlogCard, ManageDraftBlogPost } from "../components/manage-blogcard.component";
 import toast, { Toaster } from "react-hot-toast";
+import { useSearchParams } from "react-router-dom";
 
 const ManageBlogs = () => {
     const { userAuth: { access_token, username } } = useContext(UserContext);
@@ -26,9 +27,18 @@ const ManageBlogs = () => {
     const [savedViews, setSavedViews] = useState(() => JSON.parse(localStorage.getItem(storageKey) || "[]"));
     const [viewName, setViewName] = useState("");
 
+    const statusParam =searchParams.get("status") || "all";
+    const queryParam =searchParams.get("query") || "";
+    const sortParam =searchParams.get("sort") || "date";
+    const orderParam =searchParams.get("order") || "desc";
+    const pageParam =parseInt(searchParams.get("page")) || 1;
+
     const updateParams = (newParams) => {
         const params = new URLSearchParams(searchParams);
-        Object.entries(newParams).forEach(([k, v]) => v ? params.set(k, v) : params.delete(k));
+        Object.keys(newParams).forEach(k =>{
+            if(newParams[k] !== undefined && newParams[k] !=="") params.set(k,newParams[k]);
+            else params.delete(k);
+         });
         setSearchParams(params);
     };
 

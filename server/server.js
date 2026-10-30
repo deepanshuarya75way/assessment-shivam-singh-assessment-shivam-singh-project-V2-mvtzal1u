@@ -439,6 +439,10 @@ server.post("/like-blog", verifyJWT, (req, res) => {
     })
 })
 
+
+
+
+{/* */}
 server.post("/user-written-blogs", verifyJWT, (req, res) => {
     let user_id = req.user;
     let { 
@@ -451,9 +455,9 @@ server.post("/user-written-blogs", verifyJWT, (req, res) => {
     } = req.body;
 
     let maxLimit = Number(limit) || 5;
-    let findQuery = { author: user_id };
 
-    
+
+    let findQuery = { author: user_id };    
     if (draft === true || draft === "true") {
         findQuery.draft = true;
     } else if (draft === false || draft === "false") {
